@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 
->>>>>>> 2039bd6df4b29646151856502ca607b4eb1cf546
 import PackageListingForm from "@/components/component/PackageListingForm";
 import { Boxes } from "@/components/ui/background-boxes";
 import Navbar from "@/components/component/Navbar";
@@ -28,8 +25,4 @@ export default function ListPackage() {
       </main>
     </div>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 2039bd6df4b29646151856502ca607b4eb1cf546
