@@ -1,14 +1,16 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
+import { ethers } from "ethers";
 
 interface PackageDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   packageData: {
+    packageId: number;
     packageTitle: string;
     images?: string[];
     destination: string;
@@ -21,14 +23,13 @@ interface PackageDetailModalProps {
 }
 
 export const PackageDetailModal: React.FC<PackageDetailModalProps> = ({ isOpen, onClose, packageData }) => {
-  const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isBooked, setIsBooked] = useState(false); // State to track if the package is booked
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // Reset image index when modal opens
   useEffect(() => {
     if (isOpen) {
       setCurrentImageIndex(0);
-      // Prevent body scrolling when modal is open
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -61,11 +62,40 @@ export const PackageDetailModal: React.FC<PackageDetailModalProps> = ({ isOpen, 
 
   const hasMultipleImages = packageData.images && packageData.images.length > 1;
 
+  const handleBookPackage = async () => {
+    if (typeof window.ethereum !== 'undefined') {
+      try {
+        // Request account access if needed
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        
+        // Define the transaction parameters
+        const tx = {
+          to: '0x417D549A38889221Ff588FC0aca874FC93CF1e8E', // Replace with the recipient's address
+          value: ethers.parseUnits('0.1', 'ether'), // 0.1 POL (Amoy)
+        };
+        
+        // Send the transaction
+        const transaction = await signer.sendTransaction(tx);
+        await transaction.wait();
+        
+        console.log('Payment successful!');
+        setIsBooked(true); // Update state to indicate the package is booked
+      } catch (error) {
+        console.error('Error during payment:', error);
+        alert('Payment failed. Please try again.');
+      }
+    } else {
+      alert('MetaMask is not installed. Please install MetaMask to proceed.');
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -75,7 +105,6 @@ export const PackageDetailModal: React.FC<PackageDetailModalProps> = ({ isOpen, 
             onClick={onClose}
           />
           
-          {/* Modal Container - Improved layout with reduced image height */}
           <motion.div
             ref={modalRef}
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -85,7 +114,6 @@ export const PackageDetailModal: React.FC<PackageDetailModalProps> = ({ isOpen, 
             className="relative w-[95%] max-w-4xl max-h-[90vh] bg-zinc-900 rounded-xl shadow-2xl overflow-hidden flex flex-col z-[60]"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close button */}
             <button
               onClick={onClose}
               className="absolute top-4 right-4 p-2 rounded-full bg-zinc-800/90 hover:bg-zinc-700 transition-colors z-20"
@@ -94,7 +122,6 @@ export const PackageDetailModal: React.FC<PackageDetailModalProps> = ({ isOpen, 
               <X className="h-5 w-5 text-zinc-200" />
             </button>
             
-            {/* Reduced height image gallery container */}
             <div className="w-full h-48 md:h-64 flex-shrink-0">
               {packageData.images && packageData.images.length > 0 ? (
                 <div className="relative w-full h-full">
@@ -113,20 +140,22 @@ export const PackageDetailModal: React.FC<PackageDetailModalProps> = ({ isOpen, 
                       className="object-cover"
                     />
                     
-                    {/* Dark gradient overlay for better readability */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
                     
-                    {/* Image title overlay */}
                     <div className="absolute top-4 left-6 right-16 z-10">
-                      <h2 className="text-xl md:text-2xl font-bold text-white leading-tight shadow-sm">
-                        {packageData.packageTitle}
-                      </h2>
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-xl md:text-2xl font-bold text-white leading-tight shadow-sm">
+                          {packageData.packageTitle}
+                        </h2>
+                        <span className="text-sm bg-zinc-800/80 text-zinc-200 px-2 py-1 rounded">
+                          ID: {packageData.packageId}
+                        </span>
+                      </div>
                       <p className="text-sm text-zinc-200 mt-1">
                         {packageData.destination} • {packageData.duration}
                       </p>
                     </div>
                     
-                    {/* Image navigation controls */}
                     {hasMultipleImages && (
                       <>
                         <button 
@@ -162,7 +191,6 @@ export const PackageDetailModal: React.FC<PackageDetailModalProps> = ({ isOpen, 
               ) : null}
             </div>
             
-            {/* Compact thumbnail gallery */}
             {hasMultipleImages && (
               <div className="px-4 py-2">
                 <div className="flex space-x-2 overflow-x-auto py-1 -mx-1 hide-scrollbar">
@@ -186,26 +214,25 @@ export const PackageDetailModal: React.FC<PackageDetailModalProps> = ({ isOpen, 
               </div>
             )}
             
-            {/* Expanded content area - more space for details */}
             <div className="flex-1 overflow-y-auto custom-scrollbar bg-zinc-800/50">
-              {/* Package details section - Better card styling */}
               <div className="p-5 space-y-5">
-                {/* Don't repeat title if we have images */}
                 {!packageData.images?.length && (
-                  <h2 className="text-2xl md:text-3xl font-bold text-zinc-100 leading-tight">
-                    {packageData.packageTitle}
-                  </h2>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-2xl md:text-3xl font-bold text-zinc-100 leading-tight">
+                      {packageData.packageTitle}
+                    </h2>
+                    <span className="text-sm bg-zinc-700 text-zinc-200 px-3 py-1 rounded-full">
+                      ID: {packageData.packageId}
+                    </span>
+                  </div>
                 )}
                 
-               
-                
-                {/* Package details - Two column layout with better spacing and card styling */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-4 bg-zinc-800/70 p-3 rounded-lg shadow-inner">
-                  <div>
-                  <div className="inline-block px-4 py-1.5 bg-gradient-to-r from-rose-500 to-rose-600 text-white rounded-lg text-base font-semibold shadow-md">
-                  ${packageData.basePrice.toLocaleString()}
-                </div>
+                    <div>
+                      <div className="inline-block px-4 py-1.5 bg-gradient-to-r from-rose-500 to-rose-600 text-white rounded-lg text-base font-semibold shadow-md">
+                        ${packageData.basePrice.toLocaleString()}
+                      </div>
                     </div>
                     <div>
                       <h3 className="text-base font-semibold text-zinc-100 mb-1 flex items-center">
@@ -267,10 +294,15 @@ export const PackageDetailModal: React.FC<PackageDetailModalProps> = ({ isOpen, 
                   </div>
                 </div>
                 
-                {/* Improved call to action button */}
                 <div className="pt-2">
-                  <button className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                    Book This Package
+                  <button 
+                    onClick={handleBookPackage}
+                    disabled={isBooked} // Disable the button after booking
+                    className={`w-full md:w-auto px-6 py-3 bg-gradient-to-r ${
+                      isBooked ? 'from-green-600 to-green-700 cursor-not-allowed' : 'from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800'
+                    } text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5`}
+                  >
+                    {isBooked ? 'Booked' : 'Book This Package'}
                   </button>
                 </div>
               </div>
