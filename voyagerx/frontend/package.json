@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@hookform/resolvers": "^4.1.0",
     "@radix-ui/react-label": "^2.1.2",
     "@radix-ui/react-slot": "^1.1.2",
     "@rainbow-me/rainbowkit": "^2.2.4",
@@ -26,9 +27,13 @@
     "next-themes": "^0.4.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+<<<<<<< HEAD
     "react-markdown": "^10.0.0",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
+=======
+    "react-hook-form": "^7.54.2",
+>>>>>>> ff46e2f266e7ac3e59d8c569e2d6d9dacc7b79b5
     "shadcn": "^2.4.0-canary.9",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
