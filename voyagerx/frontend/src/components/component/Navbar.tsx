@@ -8,13 +8,18 @@ import { usePathname } from "next/navigation";
 
 export default function Navbar() {
   const [pathname, setPathname] = useState<string | null>(null);
+  const [activeLink, setActiveLink] = useState<string | null>(null);
 
-  // Ensure pathname is only set on the client-side
   useEffect(() => {
     setPathname(window.location.pathname);
-  }, []);
+    setActiveLink(window.location.hash || pathname); // Set hash or pathname as active
+  }, [pathname]);
 
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path: string) => activeLink === path;
+
+  const handleLinkClick = (path: string) => {
+    setActiveLink(path);
+  };
 
   return (
     <motion.nav
@@ -37,19 +42,39 @@ export default function Navbar() {
             {/* Navigation Links */}
             <div className="hidden md:block ml-10">
               <div className="flex items-baseline space-x-4">
-                <NavLink href="/how-it-works" isActive={isActive("/how-it-works")}>
+                <NavLink
+                  href="/how-it-works"
+                  isActive={isActive("/how-it-works")}
+                  onClick={() => handleLinkClick("/how-it-works")}
+                >
                   How It Works
                 </NavLink>
-                <NavLink href="/features" isActive={isActive("/features")}>
+                <NavLink
+                  href="#features"
+                  isActive={isActive("#features")}
+                  onClick={() => handleLinkClick("#features")}
+                >
                   Features
                 </NavLink>
-                <NavLink href="/agencies" isActive={isActive("/agencies")}>
+                <NavLink
+                  href="/agencies"
+                  isActive={isActive("/agencies")}
+                  onClick={() => handleLinkClick("/agencies")}
+                >
                   Agencies
                 </NavLink>
-                <NavLink href="/locker" isActive={isActive("/locker")}>
+                <NavLink
+                  href="/locker"
+                  isActive={isActive("/locker")}
+                  onClick={() => handleLinkClick("/locker")}
+                >
                   Locker
                 </NavLink>
-                <NavLink href="/reviews" isActive={isActive("/reviews")}>
+                <NavLink
+                  href="/review"
+                  isActive={isActive("/reviews")}
+                  onClick={() => handleLinkClick("/reviews")}
+                >
                   Reviews
                 </NavLink>
               </div>
@@ -71,12 +96,14 @@ interface NavLinkProps {
   href: string;
   isActive: boolean;
   children: React.ReactNode;
+  onClick: () => void;
 }
 
-function NavLink({ href, isActive, children }: NavLinkProps) {
+function NavLink({ href, isActive, children, onClick }: NavLinkProps) {
   return (
     <Link
       href={href}
+      onClick={onClick}
       className={`px-3 py-2 rounded-md text-sm font-medium ${
         isActive ? "text-rose-400" : "text-white hover:text-rose-400"
       }`}
