@@ -15,7 +15,7 @@ export default function ChatPage() {
     Array<{ type: "user" | "ai"; content: string }>
   >([]);
   const [isTyping, setIsTyping] = useState(false);
-  
+
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const addMessage = (type: "user" | "ai", content: string) => {
@@ -27,7 +27,6 @@ export default function ChatPage() {
     setIsTyping(true);
 
     try {
-      // Note: Change the URL to your backend server's URL if needed.
       const response = await fetch("http://localhost:5000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -40,7 +39,7 @@ export default function ChatPage() {
       } else {
         addMessage("ai", "Sorry, something went wrong.");
       }
-    } catch (error) {
+    } catch {
       setIsTyping(false);
       addMessage("ai", "Error connecting to server.");
     }
@@ -57,6 +56,21 @@ export default function ChatPage() {
     }
   }, [messages, isTyping]);
 
+  // Animation Variants
+  const chatContainerVariants = {
+    hidden: { opacity: 1 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.2 },
+    },
+  };
+
+  const messageVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+    exit: { opacity: 0, y: -20 },
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-zinc-900 to-zinc-700 text-white">
       <Link
@@ -70,21 +84,18 @@ export default function ChatPage() {
       <header className="p-4 bg-zinc-900 bg-opacity-30 backdrop-blur-md">
         <h1 className="text-3xl font-bold text-center">Diversion Mascot</h1>
       </header>
-      
+
       <main className="text-3xl flex-1 overflow-hidden">
-        <div
+        <motion.div
           ref={chatContainerRef}
           className="h-full overflow-y-auto p-4 space-y-4"
+          variants={chatContainerVariants}
+          initial="hidden"
+          animate="visible"
         >
           <AnimatePresence>
             {messages.map((message, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-              >
+              <motion.div key={index} variants={messageVariants}>
                 <ChatMessage
                   type={message.type}
                   content={message.content}
@@ -97,12 +108,9 @@ export default function ChatPage() {
               </motion.div>
             ))}
           </AnimatePresence>
+
           {isTyping && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-            >
+            <motion.div variants={messageVariants}>
               <ChatMessage
                 type="ai"
                 content="Typing..."
@@ -111,9 +119,9 @@ export default function ChatPage() {
               />
             </motion.div>
           )}
-        </div>
+        </motion.div>
       </main>
-      
+
       <footer className="p-4 bg-black bg-opacity-30 backdrop-blur-md">
         <QuickActions onActionClick={handleSendMessage} />
         <ChatInput onSendMessage={handleSendMessage} />

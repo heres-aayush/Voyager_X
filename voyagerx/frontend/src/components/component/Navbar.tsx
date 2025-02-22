@@ -49,7 +49,7 @@ export default function Navbar() {
                 <NavLink href="/locker" isActive={isActive("/locker")}>
                   Locker
                 </NavLink>
-                <NavLink href="/reviews" isActive={isActive("/reviews")}>
+                <NavLink href="/review" isActive={isActive("/reviews")}>
                   Reviews
                 </NavLink>
               </div>
