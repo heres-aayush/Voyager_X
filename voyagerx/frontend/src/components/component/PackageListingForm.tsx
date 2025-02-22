@@ -1,4 +1,3 @@
-// components/PackageListingForm.tsx
 "use client";
 
 import { useState, useRef } from "react";
@@ -19,6 +18,7 @@ export default function PackageListingForm() {
 
   // Form data state
   const [formData, setFormData] = useState({
+    packageId: 0,
     packageTitle: "",
     destination: "",
     duration: "",
@@ -99,14 +99,25 @@ export default function PackageListingForm() {
       </div>
     );
   }
-  
-  
 
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-8">
       {step === 1 && (
         <div className="space-y-4">
           <h3 className="text-xl font-semibold">1. Package Details</h3>
+          <div>
+            <Label htmlFor="packageId">Package ID</Label>
+            <Input
+              id="packageId"
+              type="number"
+              value={formData.packageId}
+              onChange={handleChange}
+              placeholder="Enter package ID number"
+              required
+              min="1"
+              step="1"
+            />
+          </div>
           <div>
             <Label htmlFor="packageTitle">Package Title</Label>
             <Input

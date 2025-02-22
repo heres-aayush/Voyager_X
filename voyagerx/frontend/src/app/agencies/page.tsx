@@ -85,6 +85,7 @@ const MainContent = () => {
   const displayPackages = packages.length > 0 ? packages : localPackages;
 
   interface Package {
+    packageId: number;
     images?: string[];
     packageTitle: string;
     destination: string;
@@ -118,9 +119,9 @@ const MainContent = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {displayPackages.map((pkg, index) => (
+              {displayPackages.map((pkg) => (
                 <div 
-                  key={index} 
+                  key={pkg.packageId} 
                   className="bg-zinc-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform duration-200 hover:scale-[1.02]"
                   onClick={() => handlePackageClick(pkg)}
                 >
@@ -140,8 +141,11 @@ const MainContent = () => {
                     )}
                   </div>
                   <div className="p-4">
-                    <h3 className="text-lg font-semibold">{pkg.packageTitle}</h3>
-                    <p className="text-sm text-gray-400 mb-2">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-lg font-semibold">{pkg.packageTitle}</h3>
+                      <span className="text-sm text-gray-400">ID: {pkg.packageId}</span>
+                    </div>
+                    <p className="text-sm text-gray-400">
                       {pkg.destination} | {pkg.duration} | ${pkg.basePrice.toLocaleString()}
                     </p>
                   </div>

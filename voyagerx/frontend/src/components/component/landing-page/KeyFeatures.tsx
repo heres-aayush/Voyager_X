@@ -19,7 +19,7 @@ export default function KeyFeatures() {
         {features.map((feature, index) => (
           <motion.div
             key={index}
-            className="bg-zinc-800 bg-opacity-40 backdrop-blur-md rounded-lg p-6 flex flex-col items-center text-center space-y-4"
+            className="bg-zinc-800 bg-opacity-40 backdrop-blur-md rounded-lg p-6 flex flex-col items-center text-center space-y-4 shadow-lg hover:shadow-xl transition-shadow duration-300"
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: index * 0.1 }}

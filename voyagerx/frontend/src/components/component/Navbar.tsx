@@ -37,16 +37,17 @@ export default function Navbar() {
             {/* Navigation Links */}
             <div className="hidden md:block ml-10">
               <div className="flex items-baseline space-x-4">
-                <NavLink href="/how-it-works" isActive={isActive("/how-it-works")}>
+                <NavLink href="#" isActive={isActive("/how-it-works")}>
                   How It Works
                 </NavLink>
-                <NavLink href="/features" isActive={isActive("/features")}>
+                <NavLink href="#features" isActive={pathname === "/"}>
                   Features
                 </NavLink>
+
                 <NavLink href="/agencies" isActive={isActive("/agencies")}>
                   Agencies
                 </NavLink>
-                <NavLink href="/locker" isActive={isActive("/locker")}>
+                <NavLink href="#" isActive={isActive("/locker")}>
                   Locker
                 </NavLink>
                 <NavLink href="/review" isActive={isActive("/reviews")}>

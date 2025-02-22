@@ -1,11 +1,9 @@
-// context/PackageContext.tsx
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react"
 
-
-
 interface Package {
+  packageId: number
   packageTitle: string
   destination: string
   duration: string
@@ -34,16 +32,23 @@ export const PackageProvider = ({ children }: { children: ReactNode }) => {
     setPackages(savedPackages)
 
     if (sessionStorage.getItem("cleared") !== "true") {
-        localStorage.removeItem("travelPackages")
-        setPackages([]) // Reset packages in state
-        sessionStorage.setItem("cleared", "true") // Mark session as cleared
-      }
-    }, []) 
+      localStorage.removeItem("travelPackages")
+      setPackages([]) // Reset packages in state
+      sessionStorage.setItem("cleared", "true") // Mark session as cleared
+    }
+  }, [])
 
   const addPackage = (newPackage: Package) => {
+    // Check if packageId already exists
+    const isDuplicateId = packages.some(pkg => pkg.packageId === newPackage.packageId)
+    
+    if (isDuplicateId) {
+      throw new Error(`Package with ID ${newPackage.packageId} already exists`)
+    }
+
     setPackages((prev) => [...prev, newPackage])
     
-    // Optional: persist to localStorage
+    // Persist to localStorage
     const savedPackages = JSON.parse(localStorage.getItem("travelPackages") || "[]")
     localStorage.setItem("travelPackages", JSON.stringify([...savedPackages, newPackage]))
   }
@@ -54,7 +59,5 @@ export const PackageProvider = ({ children }: { children: ReactNode }) => {
     </PackageContext.Provider>
   )
 }
-
-
 
 export const usePackages = () => useContext(PackageContext)
