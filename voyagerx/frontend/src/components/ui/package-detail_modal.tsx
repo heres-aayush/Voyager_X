@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
+import { ethers } from "ethers";
 
 interface PackageDetailModalProps {
   isOpen: boolean;
@@ -22,7 +23,8 @@ interface PackageDetailModalProps {
 }
 
 export const PackageDetailModal: React.FC<PackageDetailModalProps> = ({ isOpen, onClose, packageData }) => {
-  const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isBooked, setIsBooked] = useState(false); // State to track if the package is booked
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -59,6 +61,36 @@ export const PackageDetailModal: React.FC<PackageDetailModalProps> = ({ isOpen, 
   };
 
   const hasMultipleImages = packageData.images && packageData.images.length > 1;
+
+  const handleBookPackage = async () => {
+    if (typeof window.ethereum !== 'undefined') {
+      try {
+        // Request account access if needed
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        
+        // Define the transaction parameters
+        const tx = {
+          to: '0x417D549A38889221Ff588FC0aca874FC93CF1e8E', // Replace with the recipient's address
+          value: ethers.parseUnits('0.1', 'ether'), // 0.1 POL (Amoy)
+        };
+        
+        // Send the transaction
+        const transaction = await signer.sendTransaction(tx);
+        await transaction.wait();
+        
+        console.log('Payment successful!');
+        setIsBooked(true); // Update state to indicate the package is booked
+      } catch (error) {
+        console.error('Error during payment:', error);
+        alert('Payment failed. Please try again.');
+      }
+    } else {
+      alert('MetaMask is not installed. Please install MetaMask to proceed.');
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -263,8 +295,14 @@ export const PackageDetailModal: React.FC<PackageDetailModalProps> = ({ isOpen, 
                 </div>
                 
                 <div className="pt-2">
-                  <button className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                    Book This Package
+                  <button 
+                    onClick={handleBookPackage}
+                    disabled={isBooked} // Disable the button after booking
+                    className={`w-full md:w-auto px-6 py-3 bg-gradient-to-r ${
+                      isBooked ? 'from-green-600 to-green-700 cursor-not-allowed' : 'from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800'
+                    } text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5`}
+                  >
+                    {isBooked ? 'Booked' : 'Book This Package'}
                   </button>
                 </div>
               </div>
