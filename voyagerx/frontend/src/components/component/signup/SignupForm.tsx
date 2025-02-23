@@ -1,17 +1,18 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useForm, FormProvider } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import AgencyInfoStep from "./AgencyInfoStep";
-import BusinessDetailsStep from "./BusinessDetailsStep";
-import VerificationStep from "./VerificationStep";
-import SuccessStep from "./SuccessStep";
+import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { useForm, FormProvider } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { ChevronDown, ChevronUp } from "lucide-react"
+import AgencyInfoStep from "./AgencyInfoStep"
+import BusinessDetailsStep from "./BusinessDetailsStep"
+import VerificationStep from "./VerificationStep"
+import SuccessStep from "./SuccessStep"
 
 interface SignupFormProps {
-  className?: string;
+  className?: string
 }
 
 const signupSchema = z.object({
@@ -22,26 +23,71 @@ const signupSchema = z.object({
   location: z.string(),
   verificationDocument: z.any(),
   termsAccepted: z.boolean().refine((val: boolean) => val === true, "You must accept the terms and conditions"),
-});
+})
 
-type SignupFormData = z.infer<typeof signupSchema>;
+type SignupFormData = z.infer<typeof signupSchema>
 
-const steps = ["Agency Info", "Business Details", "Verification"];
+const steps = ["Agency Info", "Business Details", "Verification"]
 
 export default function SignupForm({ className = "" }: SignupFormProps) {
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0)
+  const [sixMonthsOpen, setSixMonthsOpen] = useState(false)
+  const [oneYearOpen, setOneYearOpen] = useState(false)
   const methods = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     mode: "onChange",
-  });
+  })
 
   const onSubmit = async (plan: string) => {
-    console.log(`User selected: ${plan}`);
-    setCurrentStep(3); // Move to success step
-  };
+    console.log(`User selected: ${plan}`)
+    setCurrentStep(3) // Move to success step
+  }
 
-  const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, steps.length));
-  const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
+  const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, steps.length))
+  const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 0))
+
+  const PlanCard = ({
+    title,
+    price,
+    commission,
+    onClick,
+    isOpen,
+    setIsOpen,
+  }: {
+    title: string
+    price: number
+    commission: string
+    onClick: (title: string) => void
+    isOpen: boolean
+    setIsOpen: (isOpen: boolean) => void
+  }) => (
+    <div className="mb-4 border rounded-lg overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-4 py-3 text-lg font-medium text-white bg-rose-600 hover:bg-rose-700 transition flex justify-between items-center"
+      >
+        <span>{title}</span>
+        {isOpen ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
+      </button>
+      {isOpen && (
+        <div className="p-4 bg-white dark:bg-gray-700">
+          <p className="text-gray-700 dark:text-gray-300 mb-2">Price: ${price}</p>
+          <p className="text-gray-700 dark:text-gray-300 mb-2">Commission: {commission}</p>
+          <p className="text-gray-700 dark:text-gray-300 mb-4">
+            Platform fees: ${price - (price * Number.parseFloat(commission)) / 100}
+          </p>
+          <button
+            type="button"
+            onClick={() => onClick(title)}
+            className="w-full px-4 py-2 text-sm font-medium text-white bg-rose-600 rounded-md shadow-md hover:bg-rose-700 transition"
+          >
+            Choose This Plan
+          </button>
+        </div>
+      )}
+    </div>
+  )
 
   return (
     <FormProvider {...methods}>
@@ -94,23 +140,25 @@ export default function SignupForm({ className = "" }: SignupFormProps) {
             {currentStep === 3 && <SuccessStep key="success" />}
           </AnimatePresence>
 
-          {/* New Platform Plan Buttons */}
+          {/* Updated Platform Plan Buttons with Dropdown */}
           {currentStep === 2 && (
             <div className="flex flex-col space-y-4 mt-6">
-              <button
-                type="button"
+              <PlanCard
+                title="6 Months Plan"
+                price={175}
+                commission="2.5%"
                 onClick={() => onSubmit("6 Months Plan")}
-                className="w-full px-4 py-3 text-lg font-medium text-white bg-rose-600 rounded-md shadow-md hover:bg-rose-700 transition"
-              >
-                Choose 6 Months Plan
-              </button>
-              <button
-                type="button"
+                isOpen={sixMonthsOpen}
+                setIsOpen={setSixMonthsOpen}
+              />
+              <PlanCard
+                title="1 Year Plan"
+                price={329}
+                commission="3%"
                 onClick={() => onSubmit("1 Year Plan")}
-                className="w-full px-4 py-3 text-lg font-medium text-white bg-rose-600 rounded-md shadow-md hover:bg-rose-700 transition"
-              >
-                Choose 1 Year Plan
-              </button>
+                isOpen={oneYearOpen}
+                setIsOpen={setOneYearOpen}
+              />
             </div>
           )}
 
@@ -139,5 +187,6 @@ export default function SignupForm({ className = "" }: SignupFormProps) {
         </motion.div>
       </form>
     </FormProvider>
-  );
+  )
 }
+
