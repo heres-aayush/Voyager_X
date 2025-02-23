@@ -2,6 +2,9 @@ Deployed Contract Address on Polygon Testnet (Amoy): 0x7F323E90D6E62F35Dd076751D
 
 # 🚀 VoyagerX
 
+![image](https://github.com/user-attachments/assets/77ceb376-f866-4735-95a0-17e982d76653)
+
+
 **VoyagerX** is a blockchain-powered travel platform that combines AI-driven trip planning, seamless booking, and a rewarding community experience. It personalizes travel planning, ensures secure transactions, and supports agencies with low commission fees.
 
 ---
