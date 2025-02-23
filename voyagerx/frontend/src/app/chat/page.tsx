@@ -75,14 +75,14 @@ export default function ChatPage() {
     <div className="flex flex-col h-screen bg-gradient-to-br from-zinc-900 to-zinc-700 text-white">
       <Link
         href="/"
-        className="absolute top-4 left-4 z-50 p-2 bg-zinc-800 rounded-full hover:bg-zinc-700 transition-colors"
+        className="absolute top-4 left-4 z-50 p-1 bg-zinc-800 rounded-full hover:bg-zinc-700 transition-colors"
         aria-label="Return to home page"
       >
         <X size={24} />
       </Link>
 
-      <header className="p-4 bg-zinc-900 bg-opacity-30 backdrop-blur-md">
-        <h1 className="text-3xl font-bold text-center">Diversion Mascot</h1>
+      <header className="p-3 bg-zinc-900 bg-opacity-30 backdrop-blur-md">
+        <h1 className="text-2xl font-bold text-center">Atlas AI</h1>
       </header>
 
       <main className="text-3xl flex-1 overflow-hidden">
