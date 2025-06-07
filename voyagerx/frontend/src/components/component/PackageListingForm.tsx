@@ -24,7 +24,7 @@ export default function PackageListingForm() {
     duration: "",
     highlights: "",
     inclusions: "",
-    basePrice: 0,
+    basePrice: "",
     availability: "",
     images: [] as string[],
   });
@@ -37,7 +37,7 @@ export default function PackageListingForm() {
     const { id, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [id]: id === "basePrice" ? Number(value) : value,
+      [id]: value
     }));
   };
 
@@ -71,9 +71,14 @@ export default function PackageListingForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Convert basePrice to number when submitting
+    const submitData = {
+      ...formData,
+      basePrice: parseFloat(formData.basePrice) || 0
+    };
     // Add the package to context
-    addPackage(formData);
-    console.log("Package listed successfully", formData);
+    addPackage(submitData);
+    console.log("Package listed successfully", submitData);
     setIsSubmitted(true);
   };
 
@@ -196,13 +201,13 @@ export default function PackageListingForm() {
         <div className="space-y-4">
           <h3 className="text-xl font-semibold">3. Pricing & Availability</h3>
           <div>
-            <Label htmlFor="basePrice">Base Price</Label>
+            <Label htmlFor="basePrice">Base Price (ETH)</Label>
             <Input
               id="basePrice"
-              type="number"
-              value={formData.basePrice || ""}
+              type="text"
+              value={formData.basePrice}
               onChange={handleChange}
-              placeholder="Enter base price"
+              placeholder="e.g., 0.001"
               required
             />
           </div>
