@@ -1,27 +1,16 @@
-
 import { HardhatUserConfig } from "hardhat/config";
-import "dotenv/config";
-import "@nomicfoundation/hardhat-ethers";
-import "@nomicfoundation/hardhat-verify";
+import "@nomicfoundation/hardhat-toolbox";
+import * as dotenv from "dotenv";
 
-const { RPC_URL_AMOY, PRIVATE_KEY, POLYGONSCAN_API } = process.env;
+dotenv.config();
 
 const config: HardhatUserConfig = {
-  defaultNetwork: "amoy",
   solidity: "0.8.28",
   networks: {
-    amoy: {
-      url: RPC_URL_AMOY || "",
-      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+    sepolia: {
+      url: process.env.SEPOLIA_RPC_URL || "",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
-  },
-  etherscan: {
-    apiKey: {
-      polygonAmoy: `${POLYGONSCAN_API}`,
-    },
-  },
-  sourcify: {
-    enabled: true,
   },
 };
 

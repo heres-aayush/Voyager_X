@@ -6,7 +6,7 @@ export const predefinedPackages = [
       packageTitle: "Maldives Luxury Escape",
       destination: "Maldives",
       duration: "5 Days / 4 Nights",
-      basePrice: 0.1,
+      basePrice: 0.0001,
       highlights: `
         Day 1: Arrival & resort check-in, welcome drink, sunset dinner by the beach 🌅  
         Day 2: Snorkeling adventure & dolphin watching 🐬  
@@ -22,7 +22,7 @@ export const predefinedPackages = [
         packageTitle: "Goa Getaway",
         destination: "Goa, India",
         duration: "5 Days / 4 Nights",
-        basePrice: 0.1,
+        basePrice: 0.00001,
         highlights: `
           Day 1: Arrival in Goa, beachside resort check-in & leisure time by the shore 🌊  
           Day 2: North Goa sightseeing – Fort Aguada, Baga Beach & Anjuna Beach 🏖️  

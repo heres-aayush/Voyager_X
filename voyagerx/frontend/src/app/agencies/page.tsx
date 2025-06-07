@@ -186,7 +186,11 @@ const MainContent = () => {
                     </div>
                     <p className="text-sm text-gray-400">
                       {pkg.destination} | {pkg.duration} |{" "}
-                      {pkg.basePrice.toLocaleString()} POL
+                      {pkg.basePrice.toLocaleString(undefined, {
+                        minimumFractionDigits: 4,
+                        maximumFractionDigits: 8,
+                      })}{" "}
+                      ETH
                     </p>
                   </div>
                 </div>

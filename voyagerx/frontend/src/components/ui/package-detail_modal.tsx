@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { ethers } from "ethers";
+import { TravelBookingABI, TravelBookingAddress } from "@/contracts";
 
 interface PackageDetailModalProps {
   isOpen: boolean;
@@ -28,13 +29,134 @@ export const PackageDetailModal: React.FC<PackageDetailModalProps> = ({
   packageData,
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isBooked, setIsBooked] = useState(false); // State to track if the package is booked
+  const [isBooked, setIsBooked] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
 
+  const switchToSepolia = async () => {
+    try {
+      // First request account access
+      await window.ethereum.request({ method: "eth_requestAccounts" });
+      
+      // Then try to switch network
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0xaa36a7' }], // Sepolia chainId in hex
+      });
+    } catch (switchError: unknown) {
+      // This error code indicates that the chain has not been added to MetaMask.
+      if (typeof switchError === 'object' && switchError !== null && 'code' in switchError && switchError.code === 4902) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [
+              {
+                chainId: '0xaa36a7',
+                chainName: 'Sepolia',
+                nativeCurrency: {
+                  name: 'SepoliaETH',
+                  symbol: 'SEP',
+                  decimals: 18,
+                },
+                rpcUrls: ['https://rpc.sepolia.org'],
+                blockExplorerUrls: ['https://sepolia.etherscan.io'],
+              },
+            ],
+          });
+        } catch (addError) {
+          console.error('Error adding Sepolia network:', addError);
+          throw addError;
+        }
+      } else {
+        throw switchError;
+      }
+    }
+  };
+
+  const checkBookingStatus = useCallback(async () => {
+    if (typeof window.ethereum !== "undefined" && packageData) {
+      try {
+        // First request account access
+        await window.ethereum.request({ method: "eth_requestAccounts" });
+        
+        console.log("Checking booking status for package:", packageData.packageId);
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        
+        // Check if we're on the correct network (Sepolia)
+        const network = await provider.getNetwork();
+        console.log("Current network:", network);
+        
+        if (network.chainId !== BigInt(11155111)) { // Sepolia chain ID
+          console.log("Switching to Sepolia network...");
+          await switchToSepolia();
+          // Wait for network change
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Get new provider after network change
+          const newProvider = new ethers.BrowserProvider(window.ethereum);
+          const newNetwork = await newProvider.getNetwork();
+          console.log("New network:", newNetwork);
+          
+          if (newNetwork.chainId !== BigInt(11155111)) {
+            throw new Error("Failed to switch to Sepolia network");
+          }
+        }
+
+        // Get current account
+        const signer = await provider.getSigner();
+        const address = await signer.getAddress();
+
+        // Get a fresh provider after any potential network changes
+        const finalProvider = new ethers.BrowserProvider(window.ethereum);
+        const contract = new ethers.Contract(
+          TravelBookingAddress,
+          TravelBookingABI,
+          finalProvider
+        );
+        
+        // Get the current booking count
+        const currentBookingCount = await contract.bookingCount();
+        console.log("Current booking count:", currentBookingCount.toString());
+
+        // Check all bookings to find if this package is booked by this user
+        let foundBooking = false;
+        for (let i = 1; i <= currentBookingCount; i++) {
+          const booking = await contract.bookings(i);
+          if (booking.packageId.toString() === packageData.packageId.toString() && 
+              booking.user.toLowerCase() === address.toLowerCase()) {
+            console.log("Found booking for package:", i);
+            setIsBooked(booking.isBooked);
+            foundBooking = true;
+            break;
+          }
+        }
+
+        if (!foundBooking) {
+          console.log("No booking found for package");
+          setIsBooked(false);
+        }
+        
+      } catch (error) {
+        console.error("Error checking booking status:", error);
+        if (error instanceof Error) {
+          console.error("Error details:", error.message);
+          // If it's a network change error, retry once
+          if (error.message.includes("network changed")) {
+            console.log("Retrying after network change...");
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            return checkBookingStatus();
+          }
+        }
+      }
+    } else {
+      console.log("Ethereum provider not available or no package data");
+    }
+  }, [packageData]);
+
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && packageData) {
+      console.log("Modal opened, checking booking status...");
       setCurrentImageIndex(0);
       document.body.style.overflow = "hidden";
+      checkBookingStatus(); // Check booking status when modal opens
     } else {
       document.body.style.overflow = "";
     }
@@ -42,7 +164,7 @@ export const PackageDetailModal: React.FC<PackageDetailModalProps> = ({
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isOpen]);
+  }, [isOpen, packageData, checkBookingStatus]);
 
   if (!packageData) return null;
 
@@ -73,22 +195,53 @@ export const PackageDetailModal: React.FC<PackageDetailModalProps> = ({
         await window.ethereum.request({ method: "eth_requestAccounts" });
 
         const provider = new ethers.BrowserProvider(window.ethereum);
+        
+        // Check if we're on the correct network (Sepolia)
+        const network = await provider.getNetwork();
+        console.log("Current network:", network);
+        
+        if (network.chainId !== BigInt(11155111)) { // Sepolia chain ID
+          console.log("Switching to Sepolia network...");
+          await switchToSepolia();
+          // Wait for network change
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Get new provider after network change
+          const newProvider = new ethers.BrowserProvider(window.ethereum);
+          const newNetwork = await newProvider.getNetwork();
+          console.log("New network:", newNetwork);
+        }
+
         const signer = await provider.getSigner();
+        const contract = new ethers.Contract(
+          TravelBookingAddress,
+          TravelBookingABI,
+          signer
+        );
 
-        // Define the transaction parameters
-        const tx = {
-          to: "0x417D549A38889221Ff588FC0aca874FC93CF1e8E", // Replace with the recipient's address
-          value: ethers.parseUnits("0.1", "ether"), // 0.1 POL (Amoy)
-        };
+        // Convert basePrice to wei
+        const amount = ethers.parseUnits(
+          packageData.basePrice.toString(),
+          "ether"
+        );
 
-        // Send the transaction
-        const transaction = await signer.sendTransaction(tx);
-        await transaction.wait();
-
-        console.log("Payment successful!");
-        setIsBooked(true); // Update state to indicate the package is booked
+        console.log("Booking package:", packageData.packageId, "with amount:", amount.toString());
+        
+        // Call the contract's bookPackage function
+        const tx = await contract.bookPackage(packageData.packageId, {
+          value: amount,
+        });
+        console.log("Transaction sent:", tx.hash);
+        
+        await tx.wait();
+        console.log("Transaction confirmed");
+        
+        console.log("Payment successful! Checking updated booking status...");
+        await checkBookingStatus(); // Check booking status after successful booking
       } catch (error) {
         console.error("Error during payment:", error);
+        if (error instanceof Error) {
+          console.error("Error details:", error.message);
+        }
         alert("Payment failed. Please try again.");
       }
     } else {
@@ -245,7 +398,10 @@ export const PackageDetailModal: React.FC<PackageDetailModalProps> = ({
                   <div className="space-y-4 bg-zinc-800/70 p-3 rounded-lg shadow-inner">
                     <div>
                       <div className="inline-block px-4 py-1.5 bg-gradient-to-r from-rose-500 to-rose-600 text-white rounded-lg text-base font-semibold shadow-md">
-                        {packageData.basePrice.toLocaleString()} POL
+                        {packageData.basePrice.toLocaleString(undefined, {
+                          minimumFractionDigits: 4,
+                          maximumFractionDigits: 8,
+                        })} ETH
                       </div>
                     </div>
                     <div>
