@@ -1,27 +1,29 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose from 'mongoose';
 
-interface IPackage extends Document {
-    packageId: number;
-    packageTitle: string;
-    destination: string;
-    duration: string;
-    highlights: string;
-    inclusions: string;
-    basePrice: number;
-    availability: string;
-    images: string[];
+interface IPackage {
+  packageTitle: string;
+  destination: string;
+  duration: string;
+  highlights: string;
+  inclusions: string;
+  basePrice: number;
+  availability: string;
+  images: string[];
 }
 
-const PackageSchema: Schema = new mongoose.Schema({
-    packageId: { type: Number, required: true, unique: true },
-    packageTitle: { type: String, required: false, trim: false },
-    destination: { type: String, required: false, trim: false },
-    duration: { type: String, required: false, trim: false },
-    highlights: { type: String, required: false, trim: false },
-    inclusions: { type: String, required: false, trim: false },
-    basePrice: { type: Number, required: true },
-    availability: { type: String, required: true, trim: false },
-    images: { type: [String], required: true },
+const packageSchema = new mongoose.Schema<IPackage>({
+  packageTitle: { type: String, required: true },
+  destination: { type: String, required: true },
+  duration: { type: String, required: true },
+  highlights: { type: String, required: true },
+  inclusions: { type: String, required: true },
+  basePrice: { type: Number, required: true },
+  availability: { type: String, required: true },
+  images: [{ type: String }]
+}, {
+  timestamps: true
 });
 
-export default mongoose.models.Package || mongoose.model<IPackage>("Package", PackageSchema);
+const PackageModel = mongoose.models.Package || mongoose.model<IPackage>('Package', packageSchema);
+
+export default PackageModel;

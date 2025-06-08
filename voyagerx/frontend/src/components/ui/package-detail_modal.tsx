@@ -7,20 +7,22 @@ import Image from "next/image";
 import { ethers } from "ethers";
 import { TravelBookingABI, TravelBookingAddress } from "@/contracts";
 
+interface PackageData {
+  _id: string;
+  packageTitle: string;
+  destination: string;
+  duration: string;
+  highlights: string;
+  inclusions: string;
+  basePrice: number;
+  availability: string;
+  images: string[];
+}
+
 interface PackageDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  packageData: {
-    packageId: number;
-    packageTitle: string;
-    images?: string[];
-    destination: string;
-    duration: string;
-    basePrice: number;
-    availability?: string;
-    highlights?: string;
-    inclusions?: string;
-  } | null;
+  packageData: PackageData | null;
 }
 
 export const PackageDetailModal: React.FC<PackageDetailModalProps> = ({
@@ -72,13 +74,21 @@ export const PackageDetailModal: React.FC<PackageDetailModalProps> = ({
     }
   };
 
+  const convertMongoIdToNumber = (mongoId: string): number => {
+    // Convert the MongoDB _id to a number by taking the first 8 characters
+    // and converting them to a number using parseInt with base 16
+    const hexString = mongoId.slice(0, 8);
+    return parseInt(hexString, 16);
+  };
+
   const checkBookingStatus = useCallback(async () => {
     if (typeof window.ethereum !== "undefined" && packageData) {
       try {
         // First request account access
         await window.ethereum.request({ method: "eth_requestAccounts" });
         
-        console.log("Checking booking status for package:", packageData.packageId);
+        const numericId = convertMongoIdToNumber(packageData._id);
+        console.log("Checking booking status for package:", numericId);
         const provider = new ethers.BrowserProvider(window.ethereum);
         
         // Check if we're on the correct network (Sepolia)
@@ -120,7 +130,7 @@ export const PackageDetailModal: React.FC<PackageDetailModalProps> = ({
         let foundBooking = false;
         for (let i = 1; i <= currentBookingCount; i++) {
           const booking = await contract.bookings(i);
-          if (booking.packageId.toString() === packageData.packageId.toString() && 
+          if (booking.packageId.toString() === numericId.toString() && 
               booking.user.toLowerCase() === address.toLowerCase()) {
             console.log("Found booking for package:", i);
             setIsBooked(booking.isBooked);
@@ -224,10 +234,11 @@ export const PackageDetailModal: React.FC<PackageDetailModalProps> = ({
           "ether"
         );
 
-        console.log("Booking package:", packageData.packageId, "with amount:", amount.toString());
+        const numericId = convertMongoIdToNumber(packageData._id);
+        console.log("Booking package:", numericId, "with amount:", amount.toString());
         
-        // Call the contract's bookPackage function
-        const tx = await contract.bookPackage(packageData.packageId, {
+        // Call the contract's bookPackage function with the numeric ID
+        const tx = await contract.bookPackage(numericId, {
           value: amount,
         });
         console.log("Transaction sent:", tx.hash);
@@ -307,7 +318,7 @@ export const PackageDetailModal: React.FC<PackageDetailModalProps> = ({
                           {packageData.packageTitle}
                         </h2>
                         <span className="text-sm bg-zinc-800/80 text-zinc-200 px-2 py-1 rounded">
-                          ID: {packageData.packageId}
+                          ID: {packageData._id}
                         </span>
                       </div>
                       <p className="text-sm text-zinc-200 mt-1">
@@ -389,7 +400,7 @@ export const PackageDetailModal: React.FC<PackageDetailModalProps> = ({
                       {packageData.packageTitle}
                     </h2>
                     <span className="text-sm bg-zinc-700 text-zinc-200 px-3 py-1 rounded-full">
-                      ID: {packageData.packageId}
+                      ID: {packageData._id}
                     </span>
                   </div>
                 )}

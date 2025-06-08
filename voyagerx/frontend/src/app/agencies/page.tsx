@@ -7,7 +7,6 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import Navbar from "@/components/component/Navbar";
-import { usePackages } from "@/context/PackageContext";
 import Image from "next/image";
 import { PackageDetailModal } from "@/components/ui/package-detail_modal";
 import { predefinedPackages } from "@/components/component/data/PredefinedPackages";
@@ -93,33 +92,48 @@ export const LogoIcon = () => (
   </Link>
 );
 
+const convertMongoIdToNumber = (mongoId: string): number => {
+  const hexString = mongoId.slice(0, 8);
+  return parseInt(hexString, 16);
+};
+
 const MainContent = () => {
-  const { packages } = usePackages();
-  const [localPackages, setLocalPackages] = useState(packages);
+  const [packages, setPackages] = useState<Package[]>([]);
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (packages.length === 0) {
-      const savedPackages = JSON.parse(
-        localStorage.getItem("travelPackages") || "[]"
-      );
-      setLocalPackages(savedPackages);
-    }
-  }, [packages]);
+    const fetchPackages = async () => {
+      try {
+        const response = await fetch('/api/packages');
+        const data = await response.json();
+        if (data.success) {
+          setPackages(data.packages);
+        } else {
+          setError(data.error || 'Failed to fetch packages');
+        }
+      } catch (err) {
+        setError('Failed to fetch packages');
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const displayPackages = [
-    ...predefinedPackages,
-    ...(packages.length > 0 ? packages : localPackages),
-  ];
+    fetchPackages();
+  }, []);
 
   interface Package {
-    packageId: number;
-    images?: string[];
+    _id: string;
     packageTitle: string;
     destination: string;
     duration: string;
+    highlights: string;
+    inclusions: string;
     basePrice: number;
+    availability: string;
+    images: string[];
   }
 
   const handlePackageClick = (pkg: Package) => {
@@ -130,6 +144,11 @@ const MainContent = () => {
   const closeModal = () => {
     setIsModalOpen(false);
   };
+
+  const displayPackages = [
+    ...predefinedPackages,
+    ...packages,
+  ];
 
   return (
     <div className="flex flex-1 p-6">
@@ -143,7 +162,15 @@ const MainContent = () => {
 
         {/* Card Scrollable Section */}
         <div className="flex-1 overflow-y-auto p-4">
-          {displayPackages.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-12">
+              <p>Loading packages...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <p className="text-red-500">{error}</p>
+            </div>
+          ) : displayPackages.length === 0 ? (
             <div className="text-center py-12">
               <h2 className="text-xl font-semibold mb-4">
                 No packages listed yet
@@ -156,7 +183,7 @@ const MainContent = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {displayPackages.map((pkg) => (
                 <div
-                  key={pkg.packageId}
+                  key={pkg._id}
                   className="bg-zinc-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform duration-200 hover:scale-[1.02]"
                   onClick={() => handlePackageClick(pkg)}
                 >
@@ -181,7 +208,7 @@ const MainContent = () => {
                         {pkg.packageTitle}
                       </h3>
                       <span className="text-sm text-gray-400">
-                        ID: {pkg.packageId}
+                        ID: {convertMongoIdToNumber(pkg._id)}
                       </span>
                     </div>
                     <p className="text-sm text-gray-400">

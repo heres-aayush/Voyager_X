@@ -7,18 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle } from "lucide-react";
-import { usePackages } from "@/context/PackageContext";
+import { CheckCircle, AlertCircle } from "lucide-react";
 
 export default function PackageListingForm() {
   const router = useRouter();
-  const { addPackage } = usePackages();
   const [step, setStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Form data state
   const [formData, setFormData] = useState({
-    packageId: 0,
     packageTitle: "",
     destination: "",
     duration: "",
@@ -69,17 +68,40 @@ export default function PackageListingForm() {
     setStep(step - 1);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Convert basePrice to number when submitting
-    const submitData = {
-      ...formData,
-      basePrice: parseFloat(formData.basePrice) || 0
-    };
-    // Add the package to context
-    addPackage(submitData);
-    console.log("Package listed successfully", submitData);
-    setIsSubmitted(true);
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Convert basePrice to number when submitting
+      const submitData = {
+        ...formData,
+        basePrice: parseFloat(formData.basePrice) || 0
+      };
+
+      const response = await fetch('/api/packages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submitData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create package');
+      }
+
+      console.log("Package listed successfully", data);
+      setIsSubmitted(true);
+    } catch (err) {
+      console.error("Failed to submit package:", err);
+      setError(err instanceof Error ? err.message : 'Failed to create package');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleViewPackages = () => {
@@ -105,24 +127,21 @@ export default function PackageListingForm() {
     );
   }
 
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-8">
       {step === 1 && (
         <div className="space-y-4">
           <h3 className="text-xl font-semibold">1. Package Details</h3>
-          <div>
-            <Label htmlFor="packageId">Package ID</Label>
-            <Input
-              id="packageId"
-              type="number"
-              value={formData.packageId}
-              onChange={handleChange}
-              placeholder="Enter package ID number"
-              required
-              min="1"
-              step="1"
-            />
-          </div>
           <div>
             <Label htmlFor="packageTitle">Package Title</Label>
             <Input
@@ -153,7 +172,7 @@ export default function PackageListingForm() {
               required
             />
           </div>
-          <Button type="button" onClick={handleNextStep}>
+          <Button type="button" onClick={handleNextStep} disabled={isLoading}>
             Next
           </Button>
         </div>
@@ -187,10 +206,11 @@ export default function PackageListingForm() {
               type="button"
               variant="outline"
               onClick={handlePreviousStep}
+              disabled={isLoading}
             >
               Previous
             </Button>
-            <Button type="button" onClick={handleNextStep}>
+            <Button type="button" onClick={handleNextStep} disabled={isLoading}>
               Next
             </Button>
           </div>
@@ -238,10 +258,13 @@ export default function PackageListingForm() {
               type="button"
               variant="outline"
               onClick={handlePreviousStep}
+              disabled={isLoading}
             >
               Previous
             </Button>
-            <Button type="submit">Publish Package</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Publishing..." : "Publish Package"}
+            </Button>
           </div>
         </div>
       )}
