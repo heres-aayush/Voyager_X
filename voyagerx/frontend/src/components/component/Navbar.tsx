@@ -50,9 +50,9 @@ export default function Navbar() {
                   How It Works
                 </NavLink>
                 <NavLink
-                  href="#features"
-                  isActive={isActive("#features")}
-                  onClick={() => handleLinkClick("#features")}
+                  href="/#features"
+                  isActive={isActive("/#features")}
+                  onClick={() => handleLinkClick("/#features")}
                 >
                   Features
                 </NavLink>
